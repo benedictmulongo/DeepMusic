@@ -56,12 +56,12 @@ def sample_music(song, ind) :
     track, track_pianoroll = extract_pianoroll(song,ind) 
     X,Y = create_dataset(track_pianoroll, 5)
     model = create_network(X)
-    history = model.fit(X, Y, validation_split=0.20, epochs=2, batch_size=100)
+    history = model.fit(X, Y, validation_split=0.20, epochs=10, batch_size=100)
 
     test = X[200]
     preds = [] 
     
-    for i in range(2):
+    for i in range(1000):
         
     
         a, b = np.shape(test)
@@ -69,7 +69,7 @@ def sample_music(song, ind) :
         
         prediction = model.predict(test, verbose=0)
         preds.append(prediction[0].astype(int).tolist() )
-        print("sum ( ", i , " ) : ", np.sum(prediction[0].astype(int)))
+        # print("sum ( ", i , " ) : ", np.max(prediction[0].astype(int)))
     
         test1 = np.concatenate((test[0], prediction))
         test = test1[1:]
@@ -84,6 +84,7 @@ song = 'DiamondHead.mid'
 track1 = sample_music(song, 0)
 track2 = sample_music(song, 1)
 multitrack = Multitrack(tracks=[track1, track2])
+multitrack.write('testSoundTrack.mid')
 
 # playsound(song)
 
