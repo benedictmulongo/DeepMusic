@@ -51,19 +51,54 @@ def create_network(X):
 
     return model
 
-song = 'DiamondHead.mid'
-track, track_pianoroll = extract_pianoroll(song,1) 
-X,Y = create_dataset(track_pianoroll, 100)
-model = create_network(X)
-history = model.fit(X, Y, validation_split=0.20, epochs=2, batch_size=100)
+def sample_music(song, ind) :
+        
+    track, track_pianoroll = extract_pianoroll(song,ind) 
+    X,Y = create_dataset(track_pianoroll, 5)
+    model = create_network(X)
+    history = model.fit(X, Y, validation_split=0.20, epochs=2, batch_size=100)
 
-# test = X[200]
-# a, b = np.shape(test)
-# 
-# prediction_input = np.reshape(pattern, (1, a, b))
-# prediction = model.predict(test, verbose=0)
-# preds = prediction[0]
-# 
-# test1 = np.concatenate((test, [[index/float(n_vocab)]]))
+    test = X[200]
+    preds = [] 
+    
+    for i in range(2):
+        
+    
+        a, b = np.shape(test)
+        test = np.reshape(test, (1, a, b))
+        
+        prediction = model.predict(test, verbose=0)
+        preds.append(prediction[0].astype(int).tolist() )
+        print("sum ( ", i , " ) : ", np.sum(prediction[0].astype(int)))
+    
+        test1 = np.concatenate((test[0], prediction))
+        test = test1[1:]
+    
+    preds = np.array(preds)
+    track = Track(pianoroll=preds, name='mpiano')
+    
+    return track
+    
+song = 'DiamondHead.mid'
+
+track1 = sample_music(song, 0)
+track2 = sample_music(song, 1)
+multitrack = Multitrack(tracks=[track1, track2])
 
 # playsound(song)
+
+
+
+# test = X[200]
+# preds = [] 
+#     
+# print("np.shape(test) : ",np.shape(test) )
+# a, b = np.shape(test)
+# test = np.reshape(test, (1, a, b))
+# prediction = model.predict(test, verbose=0)
+# preds = preds.append(prediction.astype(int).tolist() )
+# print("Pred shape 0 : ", np.shape(prediction))
+# print("Pred shape : ", np.shape(preds))
+# # 
+# test1 = np.concatenate((test[0], prediction))
+# test = test1[1:]
