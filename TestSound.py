@@ -20,8 +20,8 @@ def extract_pianoroll(song, index = 1 ) :
     files = Multitrack(song)
     track = files.tracks[index]
     track_pianoroll = track.pianoroll
-    fig, axs = track.plot()
-    plt.show()
+    # fig, axs = track.plot()
+    # plt.show()
     
     return track, track_pianoroll 
 
@@ -32,8 +32,9 @@ def create_dataset(dataset, look_back=1):
     a = dataset[i:(i+look_back), :]
     dataX.append(a)
     dataY.append(dataset[i + look_back - 1, :])
-    
-  return np.array(dataX), np.array(dataY)
+  #   
+  # return np.array(dataX), np.array(dataY)
+  return np.array(dataX[:-1]), np.array(dataY[1:])
  
 def create_network(X): 
     """Create the model architecture"""
@@ -54,7 +55,7 @@ def create_network(X):
 def sample_music(song, ind) :
         
     track, track_pianoroll = extract_pianoroll(song,ind) 
-    X,Y = create_dataset(track_pianoroll, 5)
+    X,Y = create_dataset(track_pianoroll, 100)
     model = create_network(X)
     history = model.fit(X, Y, validation_split=0.20, epochs=10, batch_size=100)
 
@@ -69,13 +70,17 @@ def sample_music(song, ind) :
         
         prediction = model.predict(test, verbose=0)
         preds.append(prediction[0].astype(int).tolist() )
-        # print("sum ( ", i , " ) : ", np.max(prediction[0].astype(int)))
+        if (i % 100 ) == 0 :
+            print("sum ( ", i , " ) : ", np.max(prediction[0].astype(int)))
     
         test1 = np.concatenate((test[0], prediction))
         test = test1[1:]
     
     preds = np.array(preds)
     track = Track(pianoroll=preds, name='mpiano')
+    
+    fig, axs = track.plot()
+    plt.show()
     
     return track
     
