@@ -18,19 +18,23 @@ from mido import MidiFile, MidiTrack, Message
 from music21 import converter, instrument, note, chord, stream
 from pypianoroll import *
 from matplotlib import pyplot as plt
-
+from keras.optimizers import Adam
 
 class KerasModel1 :
     
-    def __init__(self, path, epochs = 10, sequenceLength= 100, nLayer = 2, sampleLength = 500):
+    def __init__(self, path, epochs = 50, sequenceLength= 100, nLayer = 2, sampleLength = 500, nSamples = 10):
         
         # Path should gives the map of where the midi file is lcoated 
         self.Music_data =  glob( path  + '/*.midi')
+        if self.Music_data == [] :
+            self.Music_data =  glob( path  + '/*.mid')
+            
         self.path = path
         self.sequenceLength = sequenceLength
         self.nLayer = nLayer
         self.sampleLength = sampleLength
         self.epochs = epochs
+        self.nSamples = nSamples
         self.all_notes = []
         self.n_vocab = []
         self.note_to_int = []
@@ -38,7 +42,7 @@ class KerasModel1 :
         self.pitchnames = [] 
     
     def convert_midi_to_Notes_chords(self, song):
-        print("A")
+        # print("A")
         notes = []
         # Conversion the Midi file to a stream object
         midi = converter.parse(song)
@@ -133,7 +137,30 @@ class KerasModel1 :
         model.add(Dropout(0.3))
         model.add(Dense(self.n_vocab))
         model.add(Activation('softmax'))
-        model.compile(loss='categorical_crossentropy', optimizer='rmsprop',metrics=['accuracy'])
+        optimizer = Adam(lr=0.0001)
+        model.compile(loss='categorical_crossentropy', optimizer=optimizer , metrics=['accuracy'])
+        
+        self.models = model
+    
+        return model
+        
+    def create_network_3(self, network_in): 
+        """
+        Create the model architecture
+        
+        """
+        model = Sequential()
+        model.add(LSTM(256, input_shape=network_in.shape[1:], return_sequences=True))
+        model.add(Dropout(0.2))
+        model.add(LSTM(256, return_sequences=True))
+        model.add(Dropout(0.3))
+        model.add(LSTM(256))
+        model.add(Dense(256))
+        model.add(Dropout(0.3))
+        model.add(Dense(self.n_vocab))
+        model.add(Activation('softmax'))
+        optimizer = Adam(lr=0.0001)
+        model.compile(loss='categorical_crossentropy', optimizer=optimizer , metrics=['accuracy'])
         
         self.models = model
     
@@ -149,14 +176,20 @@ class KerasModel1 :
         
         # Model architecture
         model = KerasModel1.create_network(self, network_input)
+        # model = KerasModel1.create_network_3(self, network_input)
         
         # Training
-        history = model.fit(network_input, network_output, validation_split=0.20, epochs=self.epochs, batch_size=64)
+        history = model.fit(network_input, network_output, validation_split=0.10, epochs=self.epochs, batch_size=64)
         
         
         # Generation of music
         KerasModel1.notes_sampling(self, notes, model, network_input)
         KerasModel1.plotHistory(history)
+        
+        for i in range(self.nSamples): 
+            pred = KerasModel1.notes_sampling(self, notes, model, network_input)
+            KerasModel1.create_midi(self, pred, '\LSTMSongSample' + str(i))
+        
         
     def plotHistory(history) :
         plt.figure()
@@ -182,7 +215,7 @@ class KerasModel1 :
         """ Generate notes from the neural network based on a sequence of notes """
         # Pick a random integer
         start = np.random.randint(0, len(network_input)-1)
-        
+        start = np.random.randint(0, len(network_input)-1)
         # n_vocab, note_to_int , int_to_note = create_dictionary(notes)
     
         # int_to_note = dict((number, note) for number, note in enumerate(pitchnames))
@@ -216,12 +249,12 @@ class KerasModel1 :
             pattern = pattern[1:len(pattern)+1]
 
     
-        print('Notes Generated...')
-        KerasModel1.create_midi(self, prediction_output)
+        #print('Notes Generated...')
+        # KerasModel1.create_midi(self, prediction_output)
         
         return prediction_output
         
-    def create_midi(self, prediction_output):
+    def create_midi(self, prediction_output, theFil = 'test_output5'):
         """ convert the output from the prediction to notes and create a midi file
             from the notes """
         offset = 0
@@ -258,12 +291,15 @@ class KerasModel1 :
         midi_stream = stream.Stream(output_notes)
         
         print('Saving Output file as midi....')
+        t = r'C:\Users\ben\Desktop\Deep_learning_Project_music\Midi1Generated'
     
-        midi_stream.write('midi', fp='test_output5.mid')
+        midi_stream.write('midi', fp = t + theFil + '.mid')
+
 
 # Model1 = KerasModel1(path = 'midi1')
+# Model1 = KerasModel1(path = 'midiTest')
 Model1 = KerasModel1(path = 'Maestro2017')
-s = Model1.Data_to_Notes_chords() 
-print(len(s))
-print("S : ", s)
+# s = Model1.Data_to_Notes_chords() 
+# print(len(s))
+# print("S : ", s)
 Model1.train()

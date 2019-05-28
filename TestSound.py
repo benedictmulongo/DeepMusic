@@ -89,10 +89,10 @@ def sample_music(song, ind) :
 song = 'ultros.mid'
 # song = '2ndtime.mid'
 
-track1 = sample_music(song, 0)
-track2 = sample_music(song, 1)
-multitrack = Multitrack(tracks=[track1, track2])
-multitrack.write('testUltros.mid')
+# track1 = sample_music(song, 0)
+# track2 = sample_music(song, 1)
+# multitrack = Multitrack(tracks=[track1, track2])
+# multitrack.write('testUltros.mid')
 
 # playsound(song)
 
